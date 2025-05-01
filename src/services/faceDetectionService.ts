@@ -48,7 +48,7 @@ export class FaceDetectionService {
     }
   }
 
-  private mapDetection(detection: faceapi.WithAge<faceapi.WithGender<faceapi.WithFaceExpressions<faceapi.WithFaceLandmarks<{ detection: faceapi.FaceDetection; }>>>> ): FaceDetection {
+  private mapDetection(detection: any): FaceDetection {
     return {
       id: uuidv4(),
       detection: {
@@ -60,11 +60,11 @@ export class FaceDetectionService {
         },
       },
       landmarks: {
-        positions: detection.landmarks.positions.map(position => ({
+        positions: detection.landmarks.positions.map((position: any) => ({
           x: position.x,
           y: position.y
         })),
-        jawOutline: detection.landmarks.getJawOutline().map(position => ({
+        jawOutline: detection.landmarks.getJawOutline().map((position: any) => ({
           x: position.x,
           y: position.y
         }))

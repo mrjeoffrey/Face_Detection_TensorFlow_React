@@ -25,7 +25,7 @@ const ModelLoader: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       console.error('Error loading models:', error);
       dispatch({
         type: ActionTypes.MODELS_LOAD_FAILURE,
-        payload: 'Failed to load facial recognition models. Please refresh the page.'
+        payload: 'Failed to load facial recognition models. Please ensure the model files are in the /public/models directory.'
       });
     }
   };
@@ -58,6 +58,11 @@ const ModelLoader: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </svg>
         <h2 className="text-xl font-bold text-red-600 mb-2">Model Loading Error</h2>
         <p className="text-center mb-4">{state.models.error}</p>
+        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 my-4 rounded text-sm">
+          <p className="font-bold">Important:</p>
+          <p>Make sure you have the model files in your public/models directory.</p>
+          <p>Follow the instructions in the README.md to download them.</p>
+        </div>
         <button 
           onClick={loadFaceDetectionModels}
           className="bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
