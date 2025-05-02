@@ -3,6 +3,7 @@ import React, { useRef, useEffect } from 'react';
 import { useStore } from '../store/store';
 import { ActionTypes } from '../store/types';
 import FaceOverlay from './FaceOverlay';
+import { toast } from 'sonner';
 
 interface WebcamProps {
   onFrame?: (video: HTMLVideoElement) => void;
@@ -31,6 +32,13 @@ const Webcam: React.FC<WebcamProps> = ({ onFrame }) => {
     try {
       dispatch({ type: ActionTypes.WEBCAM_START });
       
+      console.log('Attempting to access webcam...');
+      
+      // First check if the browser supports getUserMedia
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Your browser does not support webcam access. Please try a different browser.');
+      }
+      
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: 1280 },
@@ -39,28 +47,67 @@ const Webcam: React.FC<WebcamProps> = ({ onFrame }) => {
         }
       });
       
+      console.log('Webcam access granted, setting up stream...');
       streamRef.current = stream;
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        
         videoRef.current.onloadedmetadata = () => {
           if (videoRef.current) {
-            videoRef.current.play();
-            dispatch({ type: ActionTypes.WEBCAM_START_SUCCESS });
+            console.log('Video metadata loaded, playing stream...');
+            videoRef.current.play()
+              .then(() => {
+                console.log('Webcam stream started successfully');
+                dispatch({ type: ActionTypes.WEBCAM_START_SUCCESS });
+                toast.success('Webcam started successfully');
+              })
+              .catch((error) => {
+                console.error('Error playing video:', error);
+                dispatch({ 
+                  type: ActionTypes.WEBCAM_START_FAILURE, 
+                  payload: `Error playing video: ${error.message}` 
+                });
+              });
           }
         };
+        
+        videoRef.current.onerror = (event) => {
+          console.error('Video element error:', event);
+          dispatch({ 
+            type: ActionTypes.WEBCAM_START_FAILURE, 
+            payload: 'Video element encountered an error'
+          });
+        };
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error accessing webcam:', error);
+      let errorMessage = 'Could not access webcam. Please ensure you have granted permission.';
+      
+      // More specific error messages based on common issues
+      if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+        errorMessage = 'No webcam detected. Please connect a webcam and try again.';
+      } else if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        errorMessage = 'Webcam access denied. Please grant permission in your browser settings.';
+      } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+        errorMessage = 'Webcam is already in use by another application. Please close other applications using your webcam.';
+      } else if (error.name === 'OverconstrainedError') {
+        errorMessage = 'Webcam cannot satisfy the requested constraints. Try with different settings.';
+      } else if (error.name === 'AbortError') {
+        errorMessage = 'Webcam access was aborted. Please try again.';
+      }
+      
+      toast.error(errorMessage);
       dispatch({ 
         type: ActionTypes.WEBCAM_START_FAILURE, 
-        payload: 'Could not access webcam. Please ensure you have granted permission.'
+        payload: errorMessage
       });
     }
   };
 
   const stopWebcam = () => {
     if (streamRef.current) {
+      console.log('Stopping webcam stream...');
       const tracks = streamRef.current.getTracks();
       tracks.forEach(track => track.stop());
       streamRef.current = null;
