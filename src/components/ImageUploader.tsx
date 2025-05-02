@@ -14,12 +14,9 @@ const ImageUploader: React.FC = () => {
   const imgRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Effect to ensure face overlay is updated whenever the face detection state changes
   useEffect(() => {
     if (state.detection.faces.length > 0) {
-      // Small delay to ensure DOM has updated
       setTimeout(() => {
-        // This forces a reflow which helps with positioning calculations
         if (containerRef.current) {
           containerRef.current.classList.add('force-reflow');
           setTimeout(() => {
@@ -51,7 +48,6 @@ const ImageUploader: React.FC = () => {
   const analyzeImage = async () => {
     if (!image || !imgRef.current) return;
     
-    // Check if models are loaded before proceeding
     if (!state.models.isLoaded) {
       toast.error("Face detection models are not loaded yet. Please wait for models to load and try again.");
       dispatch({ 
@@ -63,9 +59,7 @@ const ImageUploader: React.FC = () => {
     
     try {
       dispatch({ type: ActionTypes.DETECTION_START });
-      console.log("Analyzing image...");
       const detectedFaces = await faceDetectionService.detectFaces(imgRef.current);
-      console.log("Faces detected:", detectedFaces);
       
       if (detectedFaces.length === 0) {
         toast.warning("No faces detected in the image. Try another image or adjust lighting.");
@@ -79,7 +73,6 @@ const ImageUploader: React.FC = () => {
       dispatch({ type: ActionTypes.DETECTION_SUCCESS, payload: detectedFaces });
       toast.success(`${detectedFaces.length} ${detectedFaces.length === 1 ? 'face' : 'faces'} detected`);
     } catch (error) {
-      console.error('Error analyzing image:', error);
       toast.error('Failed to analyze image. Please try again.');
       dispatch({ 
         type: ActionTypes.DETECTION_FAILURE, 
@@ -174,16 +167,6 @@ const ImageUploader: React.FC = () => {
             alt="Uploaded image"
             className="max-w-full mx-auto"
             style={{ maxHeight: '600px' }}
-            onLoad={(e) => {
-              console.log("Image loaded successfully", {
-                width: e.currentTarget.width,
-                height: e.currentTarget.height,
-                naturalWidth: e.currentTarget.naturalWidth,
-                naturalHeight: e.currentTarget.naturalHeight,
-                offsetWidth: e.currentTarget.offsetWidth,
-                offsetHeight: e.currentTarget.offsetHeight,
-              });
-            }}
           />
         </div>
       )}

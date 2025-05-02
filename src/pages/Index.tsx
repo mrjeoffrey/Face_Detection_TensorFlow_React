@@ -23,7 +23,6 @@ const FaceDetectionApp: React.FC = () => {
       const detectedFaces = await faceDetectionService.detectFaces(video);
       dispatch({ type: ActionTypes.DETECTION_SUCCESS, payload: detectedFaces });
     } catch (error) {
-      console.error('Error processing video frame:', error);
       dispatch({
         type: ActionTypes.DETECTION_FAILURE,
         payload: 'Face detection failed. Please try again.'

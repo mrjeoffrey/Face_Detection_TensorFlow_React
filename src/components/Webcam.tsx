@@ -29,16 +29,12 @@ const Webcam: React.FC<WebcamProps> = ({ onFrame }) => {
     }
   }, [state.webcam.isActive]);
 
-  // Add a timer to detect if webcam initialization is taking too long
   useEffect(() => {
     let timeoutId: number | undefined;
     
     if (state.webcam.isLoading) {
       timeoutId = window.setTimeout(() => {
         if (state.webcam.isLoading) {
-          console.log('Webcam initialization timeout - retrying...');
-          
-          // If we've tried 3 times already, show a detailed error
           if (initAttempts >= 2) {
             dispatch({ 
               type: ActionTypes.WEBCAM_START_FAILURE, 
@@ -46,14 +42,13 @@ const Webcam: React.FC<WebcamProps> = ({ onFrame }) => {
             });
             toast.error('Camera initialization failed. Please check your device settings and refresh the page.');
           } else {
-            // Try again
             stopWebcam();
             setInitAttempts(prev => prev + 1);
             dispatch({ type: ActionTypes.WEBCAM_START });
             setTimeout(() => startWebcam(), 500);
           }
         }
-      }, 10000); // 10 second timeout
+      }, 10000);
     }
 
     return () => {
@@ -65,9 +60,6 @@ const Webcam: React.FC<WebcamProps> = ({ onFrame }) => {
 
   const startWebcam = async () => {
     try {
-      console.log(`Attempting to access webcam (attempt ${initAttempts + 1})...`);
-      
-      // First check if the browser supports getUserMedia
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error('Your browser does not support webcam access. Please try a different browser.');
       }
@@ -80,20 +72,12 @@ const Webcam: React.FC<WebcamProps> = ({ onFrame }) => {
         }
       };
       
-      console.log('Requesting media with constraints:', JSON.stringify(constraints));
-      
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      
-      console.log('Webcam access granted, setting up stream...');
-      console.log('Stream tracks:', stream.getTracks().map(t => ({ kind: t.kind, label: t.label, enabled: t.enabled, state: t.readyState })));
-      
       streamRef.current = stream;
 
       if (videoRef.current) {
-        console.log('Setting video srcObject...');
         videoRef.current.srcObject = stream;
         
-        // Force a display update
         videoRef.current.style.display = 'none';
         setTimeout(() => {
           if (videoRef.current) {
@@ -103,16 +87,13 @@ const Webcam: React.FC<WebcamProps> = ({ onFrame }) => {
         
         videoRef.current.onloadedmetadata = () => {
           if (videoRef.current) {
-            console.log('Video metadata loaded, playing stream...');
             videoRef.current.play()
               .then(() => {
-                console.log('Webcam stream started successfully');
                 dispatch({ type: ActionTypes.WEBCAM_START_SUCCESS });
                 setInitAttempts(0);
                 toast.success('Webcam started successfully');
               })
               .catch((error) => {
-                console.error('Error playing video:', error);
                 dispatch({ 
                   type: ActionTypes.WEBCAM_START_FAILURE, 
                   payload: `Error playing video: ${error.message}` 
@@ -122,24 +103,20 @@ const Webcam: React.FC<WebcamProps> = ({ onFrame }) => {
         };
         
         videoRef.current.onerror = (event) => {
-          console.error('Video element error:', event);
           dispatch({ 
             type: ActionTypes.WEBCAM_START_FAILURE, 
             payload: 'Video element encountered an error'
           });
         };
       } else {
-        console.error('Video reference is null');
         dispatch({ 
           type: ActionTypes.WEBCAM_START_FAILURE, 
           payload: 'Video element not found'
         });
       }
     } catch (error: any) {
-      console.error('Error accessing webcam:', error);
       let errorMessage = 'Could not access webcam. Please ensure you have granted permission.';
       
-      // More specific error messages based on common issues
       if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
         errorMessage = 'No webcam detected. Please connect a webcam and try again.';
       } else if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
@@ -164,7 +141,6 @@ const Webcam: React.FC<WebcamProps> = ({ onFrame }) => {
 
   const stopWebcam = () => {
     if (streamRef.current) {
-      console.log('Stopping webcam stream...');
       const tracks = streamRef.current.getTracks();
       tracks.forEach(track => track.stop());
       streamRef.current = null;

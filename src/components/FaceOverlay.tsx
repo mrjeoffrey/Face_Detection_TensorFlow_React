@@ -8,21 +8,15 @@ const FaceOverlay: React.FC = () => {
   const [containerScale, setContainerScale] = useState(1);
   
   useEffect(() => {
-    // Function to calculate position adjustments when faces are detected
     const updatePositionAdjustments = () => {
       const imageElement = document.querySelector('img[alt="Uploaded image"]') as HTMLImageElement;
       const videoElement = document.querySelector('video') as HTMLVideoElement;
       
-      // Figure out which element (video or image) is active and visible
       const activeElement = imageElement?.offsetParent ? imageElement : videoElement?.offsetParent ? videoElement : null;
       
       if (activeElement) {
-        // Get the actual rendered dimensions of the image/video
         const elementRect = activeElement.getBoundingClientRect();
-        const parentRect = activeElement.parentElement?.getBoundingClientRect() || { left: 0, top: 0 };
         
-        // Calculate offsets and scaling factors based on actual rendered sizes
-        // We need to use type checking to access properties that are specific to image or video
         let originalWidth = activeElement.width;
         
         if (activeElement instanceof HTMLImageElement) {
@@ -38,28 +32,16 @@ const FaceOverlay: React.FC = () => {
           y: elementRect.top 
         });
         setContainerScale(scaleX);
-        
-        console.log('FaceOverlay adjustments:', { 
-          element: activeElement instanceof HTMLImageElement ? 'image' : 'video',
-          elementRect,
-          parentRect,
-          offset: { x: elementRect.left, y: elementRect.top }, 
-          scale: scaleX,
-          originalWidth
-        });
       }
     };
     
-    // Update position whenever faces are detected
     if (state.detection.faces.length > 0) {
       updatePositionAdjustments();
-      // Also set up a small delay to ensure image/video is fully rendered
       const timeoutId = setTimeout(updatePositionAdjustments, 100);
       return () => clearTimeout(timeoutId);
     }
   }, [state.detection.faces]);
 
-  // Show face overlay for both webcam and uploaded images
   if (state.detection.faces.length === 0) {
     return null;
   }

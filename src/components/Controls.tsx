@@ -15,7 +15,6 @@ const Controls: React.FC = () => {
       toast.info('Webcam stopped');
     } else {
       dispatch({ type: ActionTypes.WEBCAM_START });
-      // The success toast will be shown in the Webcam component when it successfully starts
     }
   };
 
