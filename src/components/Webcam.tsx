@@ -1,5 +1,5 @@
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useStore } from '../store/store';
 import { ActionTypes } from '../store/types';
 import FaceOverlay from './FaceOverlay';
@@ -13,6 +13,7 @@ const Webcam: React.FC<WebcamProps> = ({ onFrame }) => {
   const { state, dispatch } = useStore();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const [initAttempts, setInitAttempts] = useState(0);
 
   useEffect(() => {
     return () => {
@@ -28,30 +29,77 @@ const Webcam: React.FC<WebcamProps> = ({ onFrame }) => {
     }
   }, [state.webcam.isActive]);
 
+  // Add a timer to detect if webcam initialization is taking too long
+  useEffect(() => {
+    let timeoutId: number | undefined;
+    
+    if (state.webcam.isLoading) {
+      timeoutId = window.setTimeout(() => {
+        if (state.webcam.isLoading) {
+          console.log('Webcam initialization timeout - retrying...');
+          
+          // If we've tried 3 times already, show a detailed error
+          if (initAttempts >= 2) {
+            dispatch({ 
+              type: ActionTypes.WEBCAM_START_FAILURE, 
+              payload: 'Unable to start webcam after multiple attempts. Please check your camera permissions and try again.'
+            });
+            toast.error('Camera initialization failed. Please check your device settings and refresh the page.');
+          } else {
+            // Try again
+            stopWebcam();
+            setInitAttempts(prev => prev + 1);
+            dispatch({ type: ActionTypes.WEBCAM_START });
+            setTimeout(() => startWebcam(), 500);
+          }
+        }
+      }, 10000); // 10 second timeout
+    }
+
+    return () => {
+      if (timeoutId) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [state.webcam.isLoading, initAttempts]);
+
   const startWebcam = async () => {
     try {
-      dispatch({ type: ActionTypes.WEBCAM_START });
-      
-      console.log('Attempting to access webcam...');
+      console.log(`Attempting to access webcam (attempt ${initAttempts + 1})...`);
       
       // First check if the browser supports getUserMedia
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error('Your browser does not support webcam access. Please try a different browser.');
       }
       
-      const stream = await navigator.mediaDevices.getUserMedia({
+      const constraints = {
         video: {
           width: { ideal: 1280 },
           height: { ideal: 720 },
           facingMode: 'user'
         }
-      });
+      };
+      
+      console.log('Requesting media with constraints:', JSON.stringify(constraints));
+      
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       
       console.log('Webcam access granted, setting up stream...');
+      console.log('Stream tracks:', stream.getTracks().map(t => ({ kind: t.kind, label: t.label, enabled: t.enabled, state: t.readyState })));
+      
       streamRef.current = stream;
 
       if (videoRef.current) {
+        console.log('Setting video srcObject...');
         videoRef.current.srcObject = stream;
+        
+        // Force a display update
+        videoRef.current.style.display = 'none';
+        setTimeout(() => {
+          if (videoRef.current) {
+            videoRef.current.style.display = 'block';
+          }
+        }, 100);
         
         videoRef.current.onloadedmetadata = () => {
           if (videoRef.current) {
@@ -60,6 +108,7 @@ const Webcam: React.FC<WebcamProps> = ({ onFrame }) => {
               .then(() => {
                 console.log('Webcam stream started successfully');
                 dispatch({ type: ActionTypes.WEBCAM_START_SUCCESS });
+                setInitAttempts(0);
                 toast.success('Webcam started successfully');
               })
               .catch((error) => {
@@ -79,6 +128,12 @@ const Webcam: React.FC<WebcamProps> = ({ onFrame }) => {
             payload: 'Video element encountered an error'
           });
         };
+      } else {
+        console.error('Video reference is null');
+        dispatch({ 
+          type: ActionTypes.WEBCAM_START_FAILURE, 
+          payload: 'Video element not found'
+        });
       }
     } catch (error: any) {
       console.error('Error accessing webcam:', error);
@@ -95,6 +150,8 @@ const Webcam: React.FC<WebcamProps> = ({ onFrame }) => {
         errorMessage = 'Webcam cannot satisfy the requested constraints. Try with different settings.';
       } else if (error.name === 'AbortError') {
         errorMessage = 'Webcam access was aborted. Please try again.';
+      } else if (error.name === 'TypeError') {
+        errorMessage = 'Browser issue with accessing the webcam. Please try refreshing the page.';
       }
       
       toast.error(errorMessage);
@@ -135,6 +192,7 @@ const Webcam: React.FC<WebcamProps> = ({ onFrame }) => {
           className="max-w-full max-h-full"
           muted
           playsInline
+          autoPlay
         />
         
         {!state.webcam.isActive && !state.webcam.isLoading && (
@@ -160,6 +218,9 @@ const Webcam: React.FC<WebcamProps> = ({ onFrame }) => {
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-70">
             <div className="loading-spinner mb-4"></div>
             <p className="text-white text-lg">Starting webcam...</p>
+            {initAttempts > 0 && (
+              <p className="text-white text-sm mt-2">Attempt {initAttempts + 1}...</p>
+            )}
           </div>
         )}
         
@@ -179,6 +240,16 @@ const Webcam: React.FC<WebcamProps> = ({ onFrame }) => {
               </svg>
               <p className="text-xl font-bold text-red-400 mb-2">Webcam Error</p>
               <p className="mb-4">{state.webcam.error}</p>
+              <button 
+                onClick={() => {
+                  setInitAttempts(0);
+                  dispatch({ type: ActionTypes.WEBCAM_START });
+                  setTimeout(() => startWebcam(), 500);
+                }}
+                className="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90 transition-colors"
+              >
+                Try Again
+              </button>
             </div>
           </div>
         )}

@@ -4,6 +4,7 @@ import { useStore } from '../store/store';
 import { ActionTypes } from '../store/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { toast } from 'sonner';
 
 const Controls: React.FC = () => {
   const { state, dispatch } = useStore();
@@ -11,8 +12,10 @@ const Controls: React.FC = () => {
   const toggleWebcam = () => {
     if (state.webcam.isActive) {
       dispatch({ type: ActionTypes.WEBCAM_STOP });
+      toast.info('Webcam stopped');
     } else {
       dispatch({ type: ActionTypes.WEBCAM_START });
+      // The success toast will be shown in the Webcam component when it successfully starts
     }
   };
 
