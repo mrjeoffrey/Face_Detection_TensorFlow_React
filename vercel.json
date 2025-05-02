@@ -3,5 +3,6 @@
     "env": {
       "NODE_VERSION": "18"
     }
-  }
+  },
+  "framework": "vite"
 }
