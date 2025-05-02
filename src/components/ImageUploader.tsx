@@ -1,5 +1,5 @@
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useStore } from '../store/store';
 import { ActionTypes } from '../store/types';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ const ImageUploader: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [image, setImage] = useState<string | null>(null);
   const imgRef = useRef<HTMLImageElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -148,14 +149,14 @@ const ImageUploader: React.FC = () => {
       )}
       
       {image && (
-        <div className="relative bg-gray-900 rounded-lg shadow-lg overflow-hidden">
+        <div ref={containerRef} className="relative bg-gray-900 rounded-lg shadow-lg overflow-hidden">
           <img
             ref={imgRef}
             src={image}
             alt="Uploaded image"
             className="max-w-full mx-auto"
+            style={{ maxHeight: '600px' }}
             onLoad={() => {
-              // Don't auto-analyze on load, wait for button click
               console.log("Image loaded successfully");
             }}
           />
