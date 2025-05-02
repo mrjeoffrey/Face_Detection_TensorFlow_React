@@ -9,7 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "vercel-build": "NODE_ENV=production npm install && npm run build"
+    "vercel-build": "NODE_ENV=production npx vite build"
   },
   "engines": {
   "node": ">=18.0.0"
