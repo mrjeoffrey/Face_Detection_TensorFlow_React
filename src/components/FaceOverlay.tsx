@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useStore } from '../store/store';
 
@@ -6,35 +5,35 @@ const FaceOverlay: React.FC = () => {
   const { state } = useStore();
   const [containerOffset, setContainerOffset] = useState({ x: 0, y: 0 });
   const [containerScale, setContainerScale] = useState(1);
-  
+
   useEffect(() => {
     const updatePositionAdjustments = () => {
       const imageElement = document.querySelector('img[alt="Uploaded image"]') as HTMLImageElement;
       const videoElement = document.querySelector('video') as HTMLVideoElement;
-      
+
       const activeElement = imageElement?.offsetParent ? imageElement : videoElement?.offsetParent ? videoElement : null;
-      
+
       if (activeElement) {
         const elementRect = activeElement.getBoundingClientRect();
-        
+
         let originalWidth = activeElement.width;
-        
+
         if (activeElement instanceof HTMLImageElement) {
           originalWidth = activeElement.naturalWidth || activeElement.width;
         } else if (activeElement instanceof HTMLVideoElement) {
           originalWidth = activeElement.videoWidth || activeElement.width;
         }
-        
+
         const scaleX = elementRect.width / originalWidth;
-        
-        setContainerOffset({ 
-          x: elementRect.left, 
-          y: elementRect.top 
+
+        setContainerOffset({
+          x: elementRect.left,
+          y: elementRect.top
         });
         setContainerScale(scaleX);
       }
     };
-    
+
     if (state.detection.faces.length > 0) {
       updatePositionAdjustments();
       const timeoutId = setTimeout(updatePositionAdjustments, 100);
@@ -48,7 +47,24 @@ const FaceOverlay: React.FC = () => {
 
   return (
     <div className="absolute top-0 left-0 w-full h-full pointer-events-none" style={{ position: 'fixed' }}>
-      {state.detection.faces.map((face) => (
+      {/* List of face information on the left */}
+      <div className="absolute top-1/2 -translate-y-1/2 left-0 bg-white bg-opacity-90 p-4 rounded shadow-md z-20">
+        {state.detection.faces.map((face, index) => (
+          <div key={face.id} className="mb-4">
+            <div className="font-medium">
+              {index + 1}. {face.gender} ({Math.round(face.genderProbability! * 100)}%), {face.age} years
+            </div>
+            {face.expressions && (
+              <div className="font-medium mt-0.5">
+                {getTopEmotion(face.expressions)}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Face overlay boxes */}
+      {state.detection.faces.map((face, index) => (
         <div
           key={face.id}
           className="absolute border-2 border-primary"
@@ -60,25 +76,15 @@ const FaceOverlay: React.FC = () => {
             boxShadow: '0 0 0 1px rgba(255,255,255,0.5)'
           }}
         >
-          <div 
-            className="absolute -top-8 left-0 bg-primary text-white px-2 py-1 text-xs rounded"
-            style={{ 
-              minWidth: '120px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
-            }}
+          <div
+            className="absolute left-1/2 -top-3 z-10"
           >
-            {face.gender && face.age && (
-              <div className="font-medium">
-                {face.gender} ({Math.round(face.genderProbability! * 100)}%), {face.age} years
-              </div>
-            )}
-            {face.expressions && (
-              <div className="font-medium mt-0.5">
-                {getTopEmotion(face.expressions)}
-              </div>
-            )}
+            <div style={{
+              boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+            }} className='absolute -top-40 -translate-y-1/2  left-0 bg-primary text-white px-2 text-xs rounded z-10'>{index + 1}</div>
+
+            <div className='absolute h-40 border-l border-primary -top-20 -translate-y-1/2'></div>
           </div>
-          
           {face.landmarks?.positions?.map((position, index) => (
             <div
               key={index}
@@ -99,14 +105,14 @@ const FaceOverlay: React.FC = () => {
 function getTopEmotion(expressions: Record<string, number>): string {
   let topEmotion = '';
   let maxValue = 0;
-  
+
   Object.entries(expressions).forEach(([emotion, value]) => {
     if (value > maxValue) {
       maxValue = value;
       topEmotion = emotion;
     }
   });
-  
+
   return `${topEmotion.charAt(0).toUpperCase() + topEmotion.slice(1)} (${Math.round(maxValue * 100)}%)`;
 }
 

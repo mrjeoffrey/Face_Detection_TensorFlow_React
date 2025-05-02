@@ -46,16 +46,6 @@ const ModelLoader: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <p className="text-gray-600 text-center max-w-md mb-4">
           Please wait while we load the necessary models for face detection. This may take a moment...
         </p>
-        <div className="text-sm text-gray-500 text-center max-w-md">
-          <p>Make sure your /public/models directory contains all required model files:</p>
-          <ul className="list-disc text-left inline-block mt-2">
-            <li>tiny_face_detector_model files</li>
-            <li>face_landmark_68_model files</li>
-            <li>face_recognition_model files</li>
-            <li>face_expression_model files</li>
-            <li>age_gender_model files</li>
-          </ul>
-        </div>
       </div>
     );
   }
@@ -76,17 +66,6 @@ const ModelLoader: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </svg>
         <h2 className="text-xl font-bold text-red-600 mb-2">Model Loading Error</h2>
         <p className="text-center mb-4">{state.models.error}</p>
-        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 my-4 rounded text-sm">
-          <p className="font-bold">Required files:</p>
-          <p>Download these files from <a href="https://github.com/justadudewhohacks/face-api.js/tree/master/weights" className="underline text-blue-600" target="_blank" rel="noopener">face-api.js GitHub repository</a> and place them in your public/models directory:</p>
-          <ul className="list-disc pl-5 mt-2">
-            <li>tiny_face_detector_model-weights_manifest.json and shard files</li>
-            <li>face_landmark_68_model-weights_manifest.json and shard files</li>
-            <li>face_recognition_model-weights_manifest.json and shard files</li>
-            <li>face_expression_model-weights_manifest.json and shard files</li>
-            <li>age_gender_model-weights_manifest.json and shard files</li>
-          </ul>
-        </div>
         <Button 
           onClick={retryLoading}
           variant="default"
