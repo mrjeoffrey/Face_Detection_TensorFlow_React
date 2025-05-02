@@ -20,20 +20,24 @@ const FaceOverlay: React.FC = () => {
             left: `${face.detection.box.x}px`,
             top: `${face.detection.box.y}px`,
             width: `${face.detection.box.width}px`,
-            height: `${face.detection.box.height}px`
+            height: `${face.detection.box.height}px`,
+            boxShadow: '0 0 0 1px rgba(255,255,255,0.5)'
           }}
         >
           <div 
             className="absolute -top-8 left-0 bg-primary text-white px-2 py-1 text-xs rounded"
-            style={{ minWidth: '120px' }}
+            style={{ 
+              minWidth: '120px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+            }}
           >
             {face.gender && face.age && (
-              <div>
+              <div className="font-medium">
                 {face.gender} ({Math.round(face.genderProbability! * 100)}%), {face.age} years
               </div>
             )}
             {face.expressions && (
-              <div>
+              <div className="font-medium mt-0.5">
                 {getTopEmotion(face.expressions)}
               </div>
             )}
@@ -42,10 +46,11 @@ const FaceOverlay: React.FC = () => {
           {face.landmarks?.positions?.map((position, index) => (
             <div
               key={index}
-              className="absolute w-1 h-1 bg-green-500 rounded-full"
+              className="absolute w-1.5 h-1.5 bg-green-500 rounded-full transform -translate-x-1/2 -translate-y-1/2"
               style={{
-                left: position.x - face.detection.box.x - 2,
-                top: position.y - face.detection.box.y - 2,
+                left: position.x - face.detection.box.x,
+                top: position.y - face.detection.box.y,
+                boxShadow: '0 0 0 1px rgba(255,255,255,0.5)'
               }}
             />
           ))}

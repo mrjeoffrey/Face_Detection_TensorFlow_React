@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useStore } from '../store/store';
 import { ActionTypes } from '../store/types';
 import faceDetectionService from '../services/faceDetectionService';
@@ -8,10 +8,11 @@ import { toast } from 'sonner';
 
 const ModelLoader: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { state, dispatch } = useStore();
+  const [loadAttempts, setLoadAttempts] = useState(0);
 
   useEffect(() => {
     loadFaceDetectionModels();
-  }, []);
+  }, [loadAttempts]);
 
   const loadFaceDetectionModels = async () => {
     if (state.models.isLoaded || state.models.isLoading) {
@@ -23,7 +24,7 @@ const ModelLoader: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     try {
       await faceDetectionService.loadModels();
       dispatch({ type: ActionTypes.MODELS_LOAD_SUCCESS });
-      toast.success('Face detection models loaded successfully');
+      toast.success('Face detection models loaded successfully! You can now analyze images.');
     } catch (error) {
       console.error('Error loading models:', error);
       dispatch({
@@ -31,6 +32,10 @@ const ModelLoader: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         payload: 'Failed to load facial recognition models. Please verify the model files are correctly placed in the /public/models directory.'
       });
     }
+  };
+
+  const retryLoading = () => {
+    setLoadAttempts(prev => prev + 1);
   };
 
   if (state.models.isLoading) {
@@ -83,7 +88,7 @@ const ModelLoader: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </ul>
         </div>
         <Button 
-          onClick={loadFaceDetectionModels}
+          onClick={retryLoading}
           variant="default"
           className="mt-4"
         >

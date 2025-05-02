@@ -9,6 +9,7 @@ export class FaceDetectionService {
 
   async loadModels(): Promise<void> {
     if (this.modelsLoaded) {
+      console.log('Models are already loaded');
       return;
     }
 
@@ -26,6 +27,7 @@ export class FaceDetectionService {
       this.modelsLoaded = true;
     } catch (error) {
       console.error('Error loading models:', error);
+      this.modelsLoaded = false;
       throw new Error('Failed to load face detection models');
     }
   }
@@ -40,6 +42,10 @@ export class FaceDetectionService {
     }
   }
 
+  isModelsLoaded(): boolean {
+    return this.modelsLoaded;
+  }
+
   async detectFaces(image: HTMLImageElement | HTMLVideoElement): Promise<FaceDetection[]> {
     if (!this.modelsLoaded) {
       throw new Error('Models not loaded yet');
@@ -48,8 +54,8 @@ export class FaceDetectionService {
     try {
       console.log('Starting face detection...');
       const detectionOptions = new faceapi.TinyFaceDetectorOptions({ 
-        inputSize: 416, // Adjust for better detection
-        scoreThreshold: 0.4 // Lower threshold for better detection
+        inputSize: 416, // Adjusted for better detection
+        scoreThreshold: 0.3 // Lower threshold for better detection
       });
       
       const detections = await faceapi

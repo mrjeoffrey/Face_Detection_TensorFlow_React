@@ -5,6 +5,7 @@ import { ActionTypes } from '../store/types';
 import { Button } from '@/components/ui/button';
 import faceDetectionService from '../services/faceDetectionService';
 import FaceOverlay from './FaceOverlay';
+import { toast } from 'sonner';
 
 const ImageUploader: React.FC = () => {
   const { state, dispatch } = useStore();
@@ -31,14 +32,36 @@ const ImageUploader: React.FC = () => {
   const analyzeImage = async () => {
     if (!image || !imgRef.current) return;
     
+    // Check if models are loaded before proceeding
+    if (!state.models.isLoaded) {
+      toast.error("Face detection models are not loaded yet. Please wait for models to load and try again.");
+      dispatch({ 
+        type: ActionTypes.DETECTION_FAILURE, 
+        payload: 'Face detection models are not loaded yet. Please wait for models to load.' 
+      });
+      return;
+    }
+    
     try {
       dispatch({ type: ActionTypes.DETECTION_START });
       console.log("Analyzing image...");
       const detectedFaces = await faceDetectionService.detectFaces(imgRef.current);
       console.log("Faces detected:", detectedFaces);
+      
+      if (detectedFaces.length === 0) {
+        toast.warning("No faces detected in the image. Try another image or adjust lighting.");
+        dispatch({ 
+          type: ActionTypes.DETECTION_SUCCESS,
+          payload: []
+        });
+        return;
+      }
+      
       dispatch({ type: ActionTypes.DETECTION_SUCCESS, payload: detectedFaces });
+      toast.success(`${detectedFaces.length} ${detectedFaces.length === 1 ? 'face' : 'faces'} detected`);
     } catch (error) {
       console.error('Error analyzing image:', error);
+      toast.error('Failed to analyze image. Please try again.');
       dispatch({ 
         type: ActionTypes.DETECTION_FAILURE, 
         payload: 'Failed to analyze image. Please try again.' 
@@ -86,12 +109,17 @@ const ImageUploader: React.FC = () => {
             variant="outline" 
             size="lg"
             className="text-lg"
-            disabled={state.detection.isProcessing}
+            disabled={state.detection.isProcessing || !state.models.isLoaded}
           >
             {state.detection.isProcessing ? (
               <>
                 <div className="mr-2 h-4 w-4 border-2 border-b-transparent border-white rounded-full animate-spin"></div>
                 Analyzing...
+              </>
+            ) : !state.models.isLoaded ? (
+              <>
+                <div className="mr-2 h-4 w-4 border-2 border-b-transparent border-primary rounded-full animate-spin"></div>
+                Loading Models...
               </>
             ) : (
               <>
