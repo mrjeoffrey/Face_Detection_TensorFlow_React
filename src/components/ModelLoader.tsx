@@ -3,6 +3,8 @@ import React, { useEffect } from 'react';
 import { useStore } from '../store/store';
 import { ActionTypes } from '../store/types';
 import faceDetectionService from '../services/faceDetectionService';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 const ModelLoader: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { state, dispatch } = useStore();
@@ -21,11 +23,12 @@ const ModelLoader: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     try {
       await faceDetectionService.loadModels();
       dispatch({ type: ActionTypes.MODELS_LOAD_SUCCESS });
+      toast.success('Face detection models loaded successfully');
     } catch (error) {
       console.error('Error loading models:', error);
       dispatch({
         type: ActionTypes.MODELS_LOAD_FAILURE,
-        payload: 'Failed to load facial recognition models. Please ensure the model files are in the /public/models directory.'
+        payload: 'Failed to load facial recognition models. Please verify the model files are correctly placed in the /public/models directory.'
       });
     }
   };
@@ -33,11 +36,21 @@ const ModelLoader: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   if (state.models.isLoading) {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center bg-white bg-opacity-90 z-50">
-        <div className="loading-spinner mb-4"></div>
-        <h2 className="text-xl font-bold mb-2">Loading Face Recognition Models</h2>
-        <p className="text-gray-600 text-center max-w-md">
+        <div className="h-16 w-16 border-4 border-t-primary border-r-transparent border-b-primary border-l-transparent rounded-full animate-spin mb-4"></div>
+        <h2 className="text-2xl font-bold mb-2">Loading Face Recognition Models</h2>
+        <p className="text-gray-600 text-center max-w-md mb-4">
           Please wait while we load the necessary models for face detection. This may take a moment...
         </p>
+        <div className="text-sm text-gray-500 text-center max-w-md">
+          <p>Make sure your /public/models directory contains all required model files:</p>
+          <ul className="list-disc text-left inline-block mt-2">
+            <li>tiny_face_detector_model files</li>
+            <li>face_landmark_68_model files</li>
+            <li>face_recognition_model files</li>
+            <li>face_expression_model files</li>
+            <li>age_gender_model files</li>
+          </ul>
+        </div>
       </div>
     );
   }
@@ -59,16 +72,23 @@ const ModelLoader: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <h2 className="text-xl font-bold text-red-600 mb-2">Model Loading Error</h2>
         <p className="text-center mb-4">{state.models.error}</p>
         <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 my-4 rounded text-sm">
-          <p className="font-bold">Important:</p>
-          <p>Make sure you have the model files in your public/models directory.</p>
-          <p>Follow the instructions in the README.md to download them.</p>
+          <p className="font-bold">Required files:</p>
+          <p>Download these files from <a href="https://github.com/justadudewhohacks/face-api.js/tree/master/weights" className="underline text-blue-600" target="_blank" rel="noopener">face-api.js GitHub repository</a> and place them in your public/models directory:</p>
+          <ul className="list-disc pl-5 mt-2">
+            <li>tiny_face_detector_model-weights_manifest.json and shard files</li>
+            <li>face_landmark_68_model-weights_manifest.json and shard files</li>
+            <li>face_recognition_model-weights_manifest.json and shard files</li>
+            <li>face_expression_model-weights_manifest.json and shard files</li>
+            <li>age_gender_model-weights_manifest.json and shard files</li>
+          </ul>
         </div>
-        <button 
+        <Button 
           onClick={loadFaceDetectionModels}
-          className="bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          variant="default"
+          className="mt-4"
         >
-          Retry
-        </button>
+          Retry Loading Models
+        </Button>
       </div>
     );
   }

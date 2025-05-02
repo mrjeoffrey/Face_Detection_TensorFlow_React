@@ -33,7 +33,9 @@ const ImageUploader: React.FC = () => {
     
     try {
       dispatch({ type: ActionTypes.DETECTION_START });
+      console.log("Analyzing image...");
       const detectedFaces = await faceDetectionService.detectFaces(imgRef.current);
+      console.log("Faces detected:", detectedFaces);
       dispatch({ type: ActionTypes.DETECTION_SUCCESS, payload: detectedFaces });
     } catch (error) {
       console.error('Error analyzing image:', error);
@@ -124,7 +126,10 @@ const ImageUploader: React.FC = () => {
             src={image}
             alt="Uploaded image"
             className="max-w-full mx-auto"
-            onLoad={analyzeImage}
+            onLoad={() => {
+              // Don't auto-analyze on load, wait for button click
+              console.log("Image loaded successfully");
+            }}
           />
           <FaceOverlay />
         </div>

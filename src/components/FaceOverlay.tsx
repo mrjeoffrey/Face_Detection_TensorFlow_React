@@ -5,7 +5,8 @@ import { useStore } from '../store/store';
 const FaceOverlay: React.FC = () => {
   const { state } = useStore();
   
-  if (!state.webcam.isActive || state.detection.faces.length === 0) {
+  // Show face overlay for both webcam and uploaded images
+  if (state.detection.faces.length === 0) {
     return null;
   }
 
@@ -14,7 +15,7 @@ const FaceOverlay: React.FC = () => {
       {state.detection.faces.map((face) => (
         <div
           key={face.id}
-          className="face-box"
+          className="absolute border-2 border-primary"
           style={{
             left: `${face.detection.box.x}px`,
             top: `${face.detection.box.y}px`,
@@ -41,7 +42,7 @@ const FaceOverlay: React.FC = () => {
           {face.landmarks?.positions?.map((position, index) => (
             <div
               key={index}
-              className="detection-point"
+              className="absolute w-1 h-1 bg-green-500 rounded-full"
               style={{
                 left: position.x - face.detection.box.x - 2,
                 top: position.y - face.detection.box.y - 2,
