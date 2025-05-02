@@ -22,7 +22,16 @@ const FaceOverlay: React.FC = () => {
         const parentRect = activeElement.parentElement?.getBoundingClientRect() || { left: 0, top: 0 };
         
         // Calculate offsets and scaling factors based on actual rendered sizes
-        const scaleX = elementRect.width / activeElement.naturalWidth || activeElement.videoWidth || activeElement.width;
+        // We need to use type checking to access properties that are specific to image or video
+        let originalWidth = activeElement.width;
+        
+        if (activeElement instanceof HTMLImageElement) {
+          originalWidth = activeElement.naturalWidth || activeElement.width;
+        } else if (activeElement instanceof HTMLVideoElement) {
+          originalWidth = activeElement.videoWidth || activeElement.width;
+        }
+        
+        const scaleX = elementRect.width / originalWidth;
         
         setContainerOffset({ 
           x: elementRect.left, 
@@ -31,12 +40,12 @@ const FaceOverlay: React.FC = () => {
         setContainerScale(scaleX);
         
         console.log('FaceOverlay adjustments:', { 
-          element: activeElement === imageElement ? 'image' : 'video',
+          element: activeElement instanceof HTMLImageElement ? 'image' : 'video',
           elementRect,
           parentRect,
           offset: { x: elementRect.left, y: elementRect.top }, 
           scale: scaleX,
-          naturalWidth: activeElement.naturalWidth || activeElement.videoWidth
+          originalWidth
         });
       }
     };
