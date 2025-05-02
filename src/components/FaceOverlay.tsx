@@ -21,20 +21,22 @@ const FaceOverlay: React.FC = () => {
         const elementRect = activeElement.getBoundingClientRect();
         const parentRect = activeElement.parentElement?.getBoundingClientRect() || { left: 0, top: 0 };
         
-        // Calculate offsets and scaling factors
-        const xOffset = parentRect.left - elementRect.left;
-        const yOffset = parentRect.top - elementRect.top;
+        // Calculate offsets and scaling factors based on actual rendered sizes
+        const scaleX = elementRect.width / activeElement.naturalWidth || activeElement.videoWidth || activeElement.width;
         
-        // Calculate scale if the image/video is being resized
-        const scaleX = elementRect.width / activeElement.offsetWidth;
-        
-        setContainerOffset({ x: xOffset, y: yOffset });
+        setContainerOffset({ 
+          x: elementRect.left, 
+          y: elementRect.top 
+        });
         setContainerScale(scaleX);
         
         console.log('FaceOverlay adjustments:', { 
           element: activeElement === imageElement ? 'image' : 'video',
-          offset: { x: xOffset, y: yOffset }, 
-          scale: scaleX 
+          elementRect,
+          parentRect,
+          offset: { x: elementRect.left, y: elementRect.top }, 
+          scale: scaleX,
+          naturalWidth: activeElement.naturalWidth || activeElement.videoWidth
         });
       }
     };
@@ -54,7 +56,7 @@ const FaceOverlay: React.FC = () => {
   }
 
   return (
-    <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+    <div className="absolute top-0 left-0 w-full h-full pointer-events-none" style={{ position: 'fixed' }}>
       {state.detection.faces.map((face) => (
         <div
           key={face.id}

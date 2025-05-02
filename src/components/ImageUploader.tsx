@@ -14,6 +14,24 @@ const ImageUploader: React.FC = () => {
   const imgRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Effect to ensure face overlay is updated whenever the face detection state changes
+  useEffect(() => {
+    if (state.detection.faces.length > 0) {
+      // Small delay to ensure DOM has updated
+      setTimeout(() => {
+        // This forces a reflow which helps with positioning calculations
+        if (containerRef.current) {
+          containerRef.current.classList.add('force-reflow');
+          setTimeout(() => {
+            if (containerRef.current) {
+              containerRef.current.classList.remove('force-reflow');
+            }
+          }, 10);
+        }
+      }, 100);
+    }
+  }, [state.detection.faces]);
+
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
@@ -156,13 +174,21 @@ const ImageUploader: React.FC = () => {
             alt="Uploaded image"
             className="max-w-full mx-auto"
             style={{ maxHeight: '600px' }}
-            onLoad={() => {
-              console.log("Image loaded successfully");
+            onLoad={(e) => {
+              console.log("Image loaded successfully", {
+                width: e.currentTarget.width,
+                height: e.currentTarget.height,
+                naturalWidth: e.currentTarget.naturalWidth,
+                naturalHeight: e.currentTarget.naturalHeight,
+                offsetWidth: e.currentTarget.offsetWidth,
+                offsetHeight: e.currentTarget.offsetHeight,
+              });
             }}
           />
-          <FaceOverlay />
         </div>
       )}
+      
+      <FaceOverlay />
     </div>
   );
 };
